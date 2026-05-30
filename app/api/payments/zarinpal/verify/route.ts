@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/supabase-js'; // Using admin client for verification
+import { createClient } from '@supabase/supabase-js';
 
 const isSandbox = process.env.NEXT_PUBLIC_ZARINPAL_SANDBOX === 'true';
 const ZARINPAL_BASE = isSandbox 
@@ -86,10 +86,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-```
-
-Note: The verify route has a placeholder for amount. In a real implementation, you should store the exact Toman amount when initiating.
-
-Now, update the detail page to use the new PaymentSelector.
-
-First, I need to add state and integrate the component.

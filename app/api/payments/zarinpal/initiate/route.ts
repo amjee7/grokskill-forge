@@ -67,6 +67,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-```
-
-Now the verify route.

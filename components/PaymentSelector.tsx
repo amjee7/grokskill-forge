@@ -108,24 +108,3 @@ export function PaymentSelector({
     </div>
   );
 }
-```
-
-This is a clean component using existing shadcn Tabs.
-
-Now, update the detail page to use this selector instead of the simple BuyButton.
-
-I need to replace the direct BuyButton with a trigger that opens the selector (or show it inline).
-
-For cleanliness, I'll show the selector when the user clicks "Buy".
-
-Since the current detail page is simplified, I'll add a state for showing the selector.
-
-Better: Replace the BuyButton with a button that opens the PaymentSelector in a nice way.
-
-For MVP, I can render the PaymentSelector directly below the content, or make the existing Buy button open a modal.
-
-To keep it simple and professional, I'll update the detail page to show the selector when the user wants to purchase.
-
-First, let's create the Zarinpal API routes.
-
-Create the initiate route.
