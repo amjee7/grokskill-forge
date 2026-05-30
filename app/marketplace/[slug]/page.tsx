@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Lock } from "lucide-react";
-import { getSkillBySlug, hasUserPurchasedSkill } from "@/lib/supabase/skills";
+import { ArrowLeft, Download } from "lucide-react";
+import { getSkillBySlug } from "@/lib/supabase/skills";
 import { createClient } from "@/lib/supabase/server";
-import { BuyButton } from "@/components/BuyButton";
+import { PaymentSelector } from "@/components/PaymentSelector";
+// BuyButton import removed - using PaymentSelector instead
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -90,29 +91,52 @@ export default async function MarketplaceSkillDetail({ params, searchParams }: P
         </div>
       </div>
 
-      {/* Actions - Always visible for MVP */}
-      <div className="flex flex-wrap gap-4">
-        <a 
-          href={`data:text/markdown;charset=utf-8,${encodeURIComponent(skill.content)}`} 
-          download={`${skill.slug || 'skill'}.md`}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-zinc-700 px-6 text-sm font-medium hover:bg-zinc-900"
-        >
-          <Download className="w-4 h-4" /> Download .md
-        </a>
-
-        <BuyButton slug={skill.slug || skill.id} priceLabel={priceLabel} />
-
-        <Link 
-          href="/marketplace" 
-          className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-700 px-6 text-sm font-medium hover:bg-zinc-900"
-        >
-          Back to Marketplace
-        </Link>
+      {/* Smart Payment Selector */}
+      <div className="mt-8 border border-zinc-800 rounded-2xl p-6 bg-[#121212]">
+        <h3 className="font-semibold text-lg mb-4">انتخاب روش پرداخت</h3>
+        
+        <PaymentSelector
+          skill={{
+            id: skill.id,
+            slug: skill.slug,
+            name: skill.name,
+            price_cents: skill.price_cents,
+          }}
+          onStripeCheckout={() => {
+            // Use existing Stripe flow (opens in new tab or same)
+            window.location.href = `/api/checkout?skill_id=${skill.id}`; // Note: may need POST adjustment in real use
+          }}
+          onZarinpalCheckout={(amountToman) => {
+            // Call Zarinpal initiate
+            fetch('/api/payments/zarinpal/initiate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                skillId: skill.id,
+                amountToman,
+                description: `خرید مهارت ${skill.name}`,
+              }),
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data.redirectUrl) {
+                  window.location.href = data.redirectUrl;
+                } else {
+                  alert('خطا در اتصال به زرین‌پال');
+                }
+              });
+          }}
+        />
       </div>
 
-      <p className="text-xs text-zinc-500 mt-6 text-center">
-        MVP Mode — Full content shown for testing. Real purchase flow coming next.
-      </p>
+      <div className="mt-6 flex justify-center">
+        <Link 
+          href="/marketplace" 
+          className="text-sm text-zinc-400 hover:text-white"
+        >
+          بازگشت به مارکت‌پلیس
+        </Link>
+      </div>
     </div>
   );
 }
