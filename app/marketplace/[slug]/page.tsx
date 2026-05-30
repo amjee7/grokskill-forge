@@ -6,7 +6,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { getSkillBySlug } from "@/lib/supabase/skills";
 import { createClient } from "@/lib/supabase/server";
 import { PaymentSelector } from "@/components/PaymentSelector";
-// BuyButton import removed - using PaymentSelector instead
+import { BuyButton } from "@/components/BuyButton";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -91,42 +91,55 @@ export default async function MarketplaceSkillDetail({ params, searchParams }: P
         </div>
       </div>
 
-      {/* Smart Payment Selector */}
-      <div className="mt-8 border border-zinc-800 rounded-2xl p-6 bg-[#121212]">
-        <h3 className="font-semibold text-lg mb-4">انتخاب روش پرداخت</h3>
-        
-        <PaymentSelector
-          skill={{
-            id: skill.id,
-            slug: skill.slug,
-            name: skill.name,
-            price_cents: skill.price_cents,
-          }}
-          onStripeCheckout={() => {
-            // Use existing Stripe flow (opens in new tab or same)
-            window.location.href = `/api/checkout?skill_id=${skill.id}`; // Note: may need POST adjustment in real use
-          }}
-          onZarinpalCheckout={(amountToman) => {
-            // Call Zarinpal initiate
-            fetch('/api/payments/zarinpal/initiate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                skillId: skill.id,
-                amountToman,
-                description: `خرید مهارت ${skill.name}`,
-              }),
-            })
-              .then(res => res.json())
-              .then(data => {
-                if (data.redirectUrl) {
-                  window.location.href = data.redirectUrl;
-                } else {
-                  alert('خطا در اتصال به زرین‌پال');
-                }
-              });
-          }}
-        />
+      {/* Conditional Payment / Free Access */}
+      <div className="mt-8">
+        {skill.price_cents === 0 ? (
+          <div className="border border-emerald-500/30 bg-emerald-500/10 rounded-2xl p-6 text-center">
+            <div className="text-emerald-400 font-medium mb-2">This skill is free</div>
+            <BuyButton 
+              slug={skill.slug} 
+              priceLabel="Free" 
+              priceCents={0} 
+            />
+            <p className="text-xs text-zinc-500 mt-3">
+              Click above to instantly add it to your library
+            </p>
+          </div>
+        ) : (
+          <div className="border border-zinc-800 rounded-2xl p-6 bg-[#121212]">
+            <h3 className="font-semibold text-lg mb-4">انتخاب روش پرداخت</h3>
+            <PaymentSelector
+              skill={{
+                id: skill.id,
+                slug: skill.slug,
+                name: skill.name,
+                price_cents: skill.price_cents,
+              }}
+              onStripeCheckout={() => {
+                window.location.href = `/api/checkout?skill_id=${skill.id}`;
+              }}
+              onZarinpalCheckout={(amountToman) => {
+                fetch('/api/payments/zarinpal/initiate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    skillId: skill.id,
+                    amountToman,
+                    description: `خرید مهارت ${skill.name}`,
+                  }),
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.redirectUrl) {
+                      window.location.href = data.redirectUrl;
+                    } else {
+                      alert('خطا در اتصال به زرین‌پال');
+                    }
+                  });
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 flex justify-center">

@@ -8,13 +8,49 @@ import { useRouter } from "next/navigation";
 interface BuyButtonProps {
   slug: string;
   priceLabel: string;
+  priceCents: number;
 }
 
-export function BuyButton({ slug, priceLabel }: BuyButtonProps) {
+export function BuyButton({ slug, priceLabel, priceCents }: BuyButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleBuy = async () => {
+  const isFree = priceCents === 0;
+
+  const handleClick = async () => {
+    if (isFree) {
+      // Free skill - directly claim it
+      setLoading(true);
+      try {
+        const res = await fetch("/api/claim-free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to claim free skill");
+        }
+
+        toast.success("Skill added to your library!", {
+          description: "You now have full access to download and use this skill.",
+        });
+
+        // Refresh the page to show updated access state
+        router.refresh();
+      } catch (err: any) {
+        toast.error("Failed to get skill", {
+          description: err.message || "Please try again.",
+        });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Paid skill - proceed with checkout
     setLoading(true);
 
     try {
@@ -31,7 +67,6 @@ export function BuyButton({ slug, priceLabel }: BuyButtonProps) {
       }
 
       if (data.url) {
-        // Redirect to Stripe Checkout
         window.location.href = data.url;
       }
     } catch (err: any) {
@@ -46,10 +81,13 @@ export function BuyButton({ slug, priceLabel }: BuyButtonProps) {
     <Button
       size="lg"
       className="btn-forge text-white px-10"
-      onClick={handleBuy}
+      onClick={handleClick}
       disabled={loading}
     >
-      {loading ? "Redirecting to checkout..." : `Buy for ${priceLabel}`}
+      {loading 
+        ? (isFree ? "Adding to your library..." : "Redirecting to checkout...") 
+        : (isFree ? "Get for Free" : `Buy for ${priceLabel}`)
+      }
     </Button>
   );
 }
