@@ -64,18 +64,22 @@ export async function getSkillBySlug(identifier: string): Promise<Skill | null> 
 /**
  * Create a new skill (used by /upload page)
  */
+// Helper to generate a clean slug from a name
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')     // remove special characters
+    .replace(/[\s_-]+/g, '-')     // collapse spaces, underscores and dashes
+    .replace(/^-+|-+$/g, '')      // trim leading/trailing dashes
+    .slice(0, 80);                // safety limit
+}
+
 export async function createSkill(input: CreateSkillInput & { owner_id: string }): Promise<Skill | null> {
   const supabase = await createClient();
 
-  // Generate clean slug (can be overridden if passed)
-  const rawSlug = (input as any).slug || input.name;
-  const slug = rawSlug
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')     // remove special chars
-    .replace(/[\s_-]+/g, '-')     // collapse spaces, underscores, dashes
-    .replace(/^-+|-+$/g, '')      // trim leading/trailing dashes
-    .slice(0, 80);                // safety limit
+  // Use provided slug or generate a clean one from the name
+  const slug = input.slug || generateSlug(input.name);
 
   const { data, error } = await supabase
     .from('skills')
@@ -89,8 +93,8 @@ export async function createSkill(input: CreateSkillInput & { owner_id: string }
       category: input.category || null,
       tags: input.tags || [],
       visibility: input.visibility || 'public',
-      price_cents: (input as any).price_cents ?? 0,
-      currency: (input as any).currency || 'usd',
+      price_cents: input.price_cents ?? 0,
+      currency: input.currency || 'usd',
       published_at: new Date().toISOString(),
     })
     .select()

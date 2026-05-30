@@ -37,6 +37,7 @@ export interface CreateSkillInput {
   name: string;
   description: string;
   content: string;
+  slug?: string;                    // Optional - will be auto-generated if not provided
   frontmatter?: Record<string, any>;
   category?: string;
   tags?: string[];
