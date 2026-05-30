@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Clock, DollarSign, Users, Globe, Shield, Zap, 
-  Star, TrendingUp 
+  Star, TrendingUp, Wallet 
 } from "lucide-react";
 import { SkillCard } from "@/components/SkillCard";
 import { demoSkills } from "@/lib/seeds";
