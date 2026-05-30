@@ -39,26 +39,55 @@ export async function getPublicSkills(): Promise<Skill[]> {
 }
 
 /**
- * ULTRA-SIMPLE MVP HACK
- * Ignores the identifier completely.
- * Always returns the very first skill in the table.
- * This is temporary to unblock the detail page for MVP testing.
+ * Forgiving lookup for MVP.
+ * Tries to find skill by slug, then by id, then by name (exact or partial).
  */
 export async function getSkillBySlug(identifier: string): Promise<Skill | null> {
+  if (!identifier) return null;
+
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // 1. Try exact slug match
+  let { data, error } = await supabase
     .from('skills')
     .select('*')
-    .limit(1)
-    .single();
+    .eq('slug', identifier)
+    .maybeSingle();
 
-  if (error) {
-    console.error('getSkillBySlug MVP error:', error);
-    return null;
+  if (data) return data as Skill;
+
+  // 2. Try by id (if it looks like a UUID)
+  if (identifier.length > 30) {
+    ({ data, error } = await supabase
+      .from('skills')
+      .select('*')
+      .eq('id', identifier)
+      .maybeSingle());
+    if (data) return data as Skill;
   }
 
-  return data as Skill;
+  // 3. Try exact name match
+  ({ data, error } = await supabase
+    .from('skills')
+    .select('*')
+    .eq('name', identifier)
+    .maybeSingle());
+
+  if (data) return data as Skill;
+
+  // 4. Very forgiving: name contains the identifier
+  ({ data, error } = await supabase
+    .from('skills')
+    .select('*')
+    .ilike('name', `%${identifier}%`)
+    .limit(1)
+    .maybeSingle());
+
+  if (error) {
+    console.error('Error fetching skill by identifier:', error);
+  }
+
+  return data as Skill | null;
 }
 
 /**

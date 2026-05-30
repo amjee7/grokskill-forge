@@ -23,17 +23,18 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function MarketplaceSkillDetail({ params, searchParams }: Props & { searchParams: Promise<{ success?: string; canceled?: string }> }) {
   const { slug } = await params;
+  console.log("Loading skill with slug:", slug);
+
   const paramsData = await searchParams;
 
-  // ULTRA-SIMPLE MVP HACK: Always load the first skill, ignore slug completely
   const skill = await getSkillBySlug(slug);
 
   if (!skill) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight mb-4">Skill loaded!</h1>
-        <p className="text-xl text-zinc-400">No skills found in the database yet.</p>
-        <p className="mt-4 text-sm text-zinc-500">Upload a skill first from the dashboard.</p>
+        <h1 className="text-4xl font-semibold tracking-tight mb-4">Skill not found</h1>
+        <p className="text-xl text-zinc-400">We couldn't find a skill matching "{slug}".</p>
+        <p className="mt-4 text-sm text-zinc-500">It may have been deleted or the link is incorrect.</p>
       </div>
     );
   }
