@@ -25,7 +25,6 @@ export function PaymentSelector({
 }: PaymentSelectorProps) {
   const [currency, setCurrency] = useState<"toman" | "usd">("toman");
 
-  // Demo conversion rate: 1 USD ≈ 65,000 Toman (adjust as needed)
   const USD_TO_TOMAN = 65000;
   const usdPrice = (skill.price_cents / 100).toFixed(2);
   const tomanPrice = Math.round((skill.price_cents / 100) * USD_TO_TOMAN);

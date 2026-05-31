@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Verify the payment
     const verifyResponse = await fetch(`${ZARINPAL_BASE}/pg/v4/payment/verify.json`, {
       method: 'POST',
       headers: {
@@ -36,14 +35,13 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify({
         merchant_id: MERCHANT_ID,
         authority,
-        amount: 10000, // This should be the actual amount sent in initiate
+        amount: 10000,
       }),
     });
 
     const verifyResult = await verifyResponse.json();
 
     if (verifyResult.data?.status === 100 || verifyResult.data?.status === 101) {
-      // Payment successful - record in database
       const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -55,7 +53,6 @@ export async function GET(request: NextRequest) {
         }
       );
 
-      // Get skill to know the amount (in a real app, store the exact amount)
       const { data: skill } = await supabaseAdmin
         .from('skills')
         .select('price_cents')
@@ -63,9 +60,9 @@ export async function GET(request: NextRequest) {
         .single();
 
       await supabaseAdmin.from('purchases').insert({
-        buyer_id: 'zarinpal-user', // In real app, get from session
+        buyer_id: 'zarinpal-user',
         skill_id: skillId,
-        stripe_session_id: authority, // Reuse field for Zarinpal authority
+        stripe_session_id: authority,
         amount_cents: skill?.price_cents || 0,
         currency: 'irr',
         status: 'succeeded',
